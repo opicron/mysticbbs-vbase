@@ -17,10 +17,16 @@ Got huge file areas? Cannot navigate your bases with ease? Fed up with the stock
 # Files
 
 <img src="screenshot - files 80x25.png" alt="80x25" width="400"/>
+*80x25 mode*
+
 <img src="screenshot - files 132x37.png" alt="132x37" width="400"/>
+*132x37 mode*
 
 # Groups
 
 <img src="screenshot - groups 80x25.png" alt="80x25" width="400"/>
+*80x25 mode*
+
 <img src="screenshot - groups 132x37.png" alt="132x37" width="400"/>
+*132x37 mode*
 
