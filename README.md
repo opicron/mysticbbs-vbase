@@ -20,7 +20,7 @@ Got huge file areas? Cannot navigate your bases with ease? Fed up with the stock
 <img src="screenshot - files 80x25.png" alt="80x25" width="400"/>
 
 132x37:<br>
-<img src="screenshot - files 132x37.png" alt="132x37" width="400"/>
+<img src="screenshot - files 132x37.png" alt="132x37" width="600"/>
 
 
 # Groups
@@ -29,6 +29,6 @@ Got huge file areas? Cannot navigate your bases with ease? Fed up with the stock
 <img src="screenshot - groups 80x25.png" alt="80x25" width="400"/>
 
 132x37:<br>
-<img src="screenshot - groups 132x37.png" alt="132x37" width="400"/>
+<img src="screenshot - groups 132x37.png" alt="132x37" width="600"/>
 
 
