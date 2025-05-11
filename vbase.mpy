@@ -311,6 +311,7 @@ def terminal_restore():
 
     termios.tcsetattr(fd, termios.TCSADRAIN, fd_old_attr)
 
+
 def keypressed_custom(timeout=0.1):
     global fd
     return bool(select.select([fd], [], [], timeout)[0])
@@ -2560,14 +2561,18 @@ def filelistmenu(fbase):
         if 'newonly' not in action and 'fileonly' not in action:
           msgdialog(' Error ',no_files_str)
         else:
-          msgdialog('','|16|15No new files found :(',False,2)
-          write('|[X01|[Y19|PA')
+          msgdialog('','|16|15No new files found :( [ENTER]',False,2)
+          getkey_custom()
+          #write('|[X01|[Y19|PA')
         return -1
 
     #popup before showing new files
     if 'newonly' in action and 'fileonly' in action:
-      msgdialog('','|16|15Yes, new files found!',False,2)
-      write('|[X01|[Y19|PA')
+      msgdialog('','|16|15Yes, new files found! [ENTER]',False,2)
+      flush()
+      getkey_custom()
+      #write('|[X01|[Y19|PA')
+      #flush()
 
     #exit_code = ""
     key = ""
@@ -2607,6 +2612,8 @@ def filelistmenu(fbase):
     mouse = False
     while done == False and not shutdown():
         
+        flush()
+
         #[opi] when coming back from propts etc 
         if redraw == True:
         
@@ -2631,13 +2638,15 @@ def filelistmenu(fbase):
             
             menucmd('FG',str(items[selbar]['groupid']))
             menucmd('FA',str(items[selbar]['baseid']))
-
+            
             #write(str(items[selbar]['baseid']))
             #tmpbase = getfbaseid(int(items[selbar]['baseid']))
             fbase = getfbaseid(int(items[selbar]['baseid']))
             #write(str(tmpbase))
             setpinfo(7, fbase['name'].replace('!VG','').replace('!VB','').strip() )        
             write(config2.get('files','area'))
+            #flush()
+
 
           #[opi]debug for strlen
           #gotoxy(1,1)
@@ -2999,24 +3008,28 @@ def filelistmenu(fbase):
                 if ord(character) in [176,177,178, 219, 220, 221, 223, 224]:
                   items[selbar]['ansi'] = True
 
-          if 'ansi' in items[selbar] and items[selbar]['ansi'] == False:
+          #if 'ansi' in items[selbar] and items[selbar]['ansi'] == False:
             #writeln(ascstart)
-            flush()
+            #flush()
 
           diz(dizi)               
-
-          if 'ansi' in items[selbar] and items[selbar]['ansi'] == False:
+          #flush()
+          #if 'ansi' in items[selbar] and items[selbar]['ansi'] == False:
             #writeln(ascend)
-            flush()
+            #flush()
 
 
         oldbar = selbar
         oldtop = top
         flush()
+        #purgeinput()
+        
 
         if keypressed_custom() or nextfile == True:
           if nextfile == False:
             key, extended, mouse = getkey_custom(mouse)
+            #purgeinput()
+
           else:
             key = KEY_DOWN
             extended = True
@@ -3150,7 +3163,7 @@ def filelistmenu(fbase):
             elif key == KEY_ENTER or key == 'V':
               #logerror('--test')
               #logerror(str(fbase))
-                  
+                    
               #VIRTUAL BASE
               if fbase['tag'].find('!VB') > -1 or fbase['tag'].find('!VG') > -1:
                   file = items[selbar]['realpath']+items[selbar]['name']
@@ -3191,30 +3204,14 @@ def filelistmenu(fbase):
                     menucmd('GV','ansiview;'+file)
                     #redraw = True
                   else:
-                    #menucmd('FA',str(bid))
-                    #if 'z' in fbase['listacs']
-                    #gg = getgroupfromacs(str(fbase['listacs']))
-                    #if gg>0: 
-                    #    menucmd('FG',str(gg))
-                    fn = items[selbar]['name'].upper()
-                    fn = fn.split('.')
-                    #writexy(1,1,14,str(fn[-1:]))
-                    #pause()
-
-                    #IF ARJ:
-                      #convert file to ZIP (if ARJ)
-                      #invoke mutil to upload temp file
-                    #ELSE
+                    #terminal_restore()
+                    #flush()
+                    #purgeinput()
 
                     stuffkey(items[selbar]['name']+chr(13))
-                    #stuffkey(items[selbar]['name'])
-                    #stuffkey(items[selbar]['name'])
-                    #if 'ansi' in items[selbar] and not items[selbar]['ansi']:
-                    #  pwrite(ascstart)
-                    #write('|16')
-
-                  
-                    menucmd('FV','')             
+                    #key2 = getkey()
+                    #write('|PA')
+                    menucmd('FV',items[selbar]['name'])             
                   
                     #if 'ansi' in items[selbar] and not items[selbar]['ansi']:
                     #  pwrite(ascend)
@@ -3226,6 +3223,8 @@ def filelistmenu(fbase):
                         #stuffkey(items[selbar]['name']+chr(13))
                         #menucmd('FV','')
                         #menucmd('GV','ansiviewtxt;ansiviewh;0;'+fbase['path']+items[selbar]['name'])
+
+                    #terminal_set()
 
             elif key == KEY_SPACE:
 
@@ -3260,6 +3259,9 @@ def filelistmenu(fbase):
 
             elif key == 'D':
                 
+                menucmd('NA','vBASE - Leeching Files')
+                sysoplog(1,'vBASE - Leeching Files')
+
                 #DOWNLOAD if virtual base
                 if fbase['tag'].find('!VB') > -1 or fbase['tag'].find('!VG') > -1: 
                   write(config2.get('mci','download_hdr'))
@@ -3347,6 +3349,8 @@ def filelistmenu(fbase):
                 #empty buffer on escape/fail etc
                 while keypressed():
                   key = getkey()
+
+                menucmd('NA','vBASE - Viewing Files')
 
             #change sorting
 
@@ -3503,6 +3507,7 @@ def replace_prompts():
   global prompt_317
 
   global prompt_344
+  global prompt_351
   global prompt_353
   global prompt_357
   global prompt_359
@@ -3584,9 +3589,13 @@ def replace_prompts():
   prompt_344 = getprompt(344)
   setprompt(344, '|IF|00')
 
+  #351 transfering files
+  prompt_351 = getprompt(351)
+  setprompt(351, 'vBase - Leeching Files')
+
   #353 archive view:
   prompt_353 = getprompt(353)
-  setprompt(353, '|IF|15|CL|[Y02')
+  setprompt(353, '|IF|CL|00[Y02')
 
   #357 add file to batch
   prompt_357 = getprompt(357)
@@ -3612,8 +3621,8 @@ def restore_prompts():
   #global prompt_62
   global prompt_316
   global prompt_317
-
   global prompt_344
+  global prompt_351
   global prompt_353
   global prompt_357
   #global prompt_359
@@ -3651,6 +3660,9 @@ def restore_prompts():
   #344 enter filename prompt:
   setprompt(344, prompt_344)
   
+  #351 transfering files
+  setprompt(351, prompt_351)
+
   #353 archive view:
   setprompt(353, prompt_353)
 
@@ -3680,7 +3692,7 @@ action = []
 load_config()
 terminal_set()
 
-write(KEY_ESCAPE+'[?1000h')
+#write(KEY_ESCAPE+'[?1000h')
 """
 for i in range(1, 254):  # Nice warm-to-pink rainbow range
     sys.stdout.write( "\033[38;5;%dm8" % i )
