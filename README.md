@@ -1,18 +1,21 @@
-# vBASE - filelister mod for Mystic BBS
+# vBase - File Lister mod for Mystic BBS
 
 Got huge file areas? Cannot navigate your bases with ease? Fed up with the stock file browser? Look no further, with ViewBase browsing is a breeze! 
 
 * widescreen compatible
+* mouse event compatible
+* mystic queue compatible
 * group/base switcher
 * file lister
 * file extensions mod support
 * sort (name/downloads/date)
 * 100% configurable
 * efficient re-drawing
-* timed description drawing
 * scrollable filenames
-* ultra fast browsing
+* ultra fast browsing due to timed redraws
 * savely resets and restores prompts
+* virtual filegroups/filebases support
+* base64 view
 
 # Files
 
