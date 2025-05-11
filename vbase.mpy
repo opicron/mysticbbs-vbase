@@ -3039,15 +3039,23 @@ def filelistmenu(fbase):
             
             if key == 0:
               mousepos = mouse[1] - mci_extract_y(config2.get('files','startpos'))
-              if mousepos >= 0 and mousepos < config2.getint('files','max_files') - 1 and mousepos < len(items):
+              if mousepos >= 0 and mousepos < config2.getint('files','max_files') and mousepos < len(items):
                 tmpbar = selbar
                 selbar = mousepos + top
+
+              dizi = 0
+              fnstrpos = 0
+              redrawfnstr = False
+              movement = True
+              redrawtimeout = True
+              #redraw = True
 
             #double click
             if key == 4:
               mouse = False
               key = KEY_ENTER
               extended = False
+              
               purgeinput() # else mystic internal mouse event doesnt work well!
 
 
