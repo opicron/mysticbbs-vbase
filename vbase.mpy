@@ -396,7 +396,7 @@ def utf_to_ascii( s ):
         '\xc2\xbf':chr(168), # ¿ INVERTED QUESTION MARK
 
         '\xc3\x80':chr(133), # À LATIN CAPITAL LETTER A WITH GRAVE
-        '\xc3\x81':chr(160), # Á LATIN CAPITAL LETTER A WITH ACUTE
+        '\xc3\x81':chr(160), # Ý LATIN CAPITAL LETTER A WITH ACUTE
         '\xc3\x82':chr(131), # Â LATIN CAPITAL LETTER A WITH CIRCUMFLEX
         '\xc3\x83':chr(131), # Ã LATIN CAPITAL LETTER A WITH TILDE
         '\xc3\x84':chr(142), # Ä LATIN CAPITAL LETTER A WITH DIAERESIS
@@ -408,10 +408,10 @@ def utf_to_ascii( s ):
         '\xc3\x8a':chr(136), # Ê LATIN CAPITAL LETTER E WITH CIRCUMFLEX
         '\xc3\x8b':chr(137), # Ë LATIN CAPITAL LETTER E WITH DIAERESIS
         '\xc3\x8c':chr(141), # Ì LATIN CAPITAL LETTER I WITH GRAVE
-        '\xc3\x8d':chr(161), # Í LATIN CAPITAL LETTER I WITH ACUTE
+        '\xc3\x8d':chr(161), # Ý LATIN CAPITAL LETTER I WITH ACUTE
         '\xc3\x8e':chr(140), # Î LATIN CAPITAL LETTER I WITH CIRCUMFLEX
-        '\xc3\x8f':chr(139), # Ï LATIN CAPITAL LETTER I WITH DIAERESIS
-        '\xc3\x90':'D', # Ð LATIN CAPITAL LETTER ETH
+        '\xc3\x8f':chr(139), # Ý LATIN CAPITAL LETTER I WITH DIAERESIS
+        '\xc3\x90':'D', # Ý LATIN CAPITAL LETTER ETH
         '\xc3\x91':chr(165), # Ñ LATIN CAPITAL LETTER N WITH TILDE
         '\xc3\x92':chr(149), # Ò LATIN CAPITAL LETTER O WITH GRAVE
         '\xc3\x93':chr(162), # Ó LATIN CAPITAL LETTER O WITH ACUTE
@@ -1011,10 +1011,11 @@ def editqueue():
         msgdialog(' Clear ',queue_empty_str)
 
       clear_download_queue()
-      for i in range(len(items)):
-        items[i]['queue'] = False
+      if len(items)>0:
+        for i in range(len(items)):
+          items[i]['queue'] = False
 
-      menucmd('QC','');
+      menucmd('QC','')
       
       #
       #else:                  
@@ -1754,10 +1755,27 @@ def loadmainlist(addgroup=True, quick=False):
      
           #only add group if necessary (newfile, allfiles)
           if not groupadded and addgroup:
+            #if len(res) < 5:
             res.append({'name':filegroups[i]['name'],'type':'group','acs':filegroups[i]['acs']})   #,'target':filegroups[i]['id']
             groupadded = True
 
-          res.append({'tag':filebases[j]['tag'],'lsfilename':filebases[j]['lsfilename'],'path':filebases[j]['path'],'lastscan':filebases[j]['lastscan'],'total':filebases[j]['total'],'totalkb':filebases[j]['totalkb'],'totaldl':filebases[j]['totaldl'],'newfiles':filebases[j]['newfiles'],'id':filebases[j]['id'],'name':filebases[j]['name'],'type':'mbase','acs':filebases[j]['listacs'],'dlacs':filebases[j]['dlacs'],'target':str(filebases[j]['id']),'desc':'','groupid':filegroups[i]['id']})
+          #if len(res) < 2:
+          res.append({'tag':filebases[j]['tag'],
+                      #'lsfilename':filebases[j]['lsfilename'],
+                      'path':filebases[j]['path'],
+                      'lastscan':filebases[j]['lastscan'],
+                      'total':filebases[j]['total'],
+                      'totalkb':filebases[j]['totalkb'],
+                      'totaldl':filebases[j]['totaldl'],
+                      'newfiles':filebases[j]['newfiles'],
+                      'id':filebases[j]['id'],
+                      'name':filebases[j]['name'],
+                      'type':'mbase',
+                      'acs':filebases[j]['listacs'],
+                      'dlacs':filebases[j]['dlacs'],
+                      'target':str(filebases[j]['id']),
+                      'desc':'',
+                      'groupid':filegroups[i]['id']})
                
  
   #loop again for fileareas without groups
@@ -1768,7 +1786,22 @@ def loadmainlist(addgroup=True, quick=False):
         #[opi] add base
         #res.append({'path':filebases[j]['path'],'lastscan':filebases[j]['lastscan'],'total':filebases[j]['total'],'totalkb':filebases[j]['totalkb'],'totaldl':filebases[j]['totaldl'],'newfiles':filebases[j]['newfiles'],'id':filebases[j]['id'],'name':filebases[j]['name'],'type':'mbase','acs':filebases[j]['listacs'],'target':str(filebases[j]['id']),'desc':'','groupid':filegroups[i]['id']})
         if ("newonly" in action and filebases[j]['newfiles'] > 0) or "newonly" not in action:
-          res.append({'tag':filebases[j]['tag'],'path':filebases[j]['path'],'lastscan':filebases[j]['lastscan'],'total':filebases[j]['total'],'totalkb':filebases[j]['totalkb'],'totaldl':filebases[j]['totaldl'],'newfiles':filebases[j]['newfiles'],'id':filebases[j]['id'],'name':filebases[j]['name'],'type':'mbase','acs':filebases[j]['listacs'],'dlacs':filebases[j]['dlacs'],'desc':'','groupid':filegroups[i]['id']})
+          res.insert(0,{'tag':filebases[j]['tag'],
+                      #'lsfilename':filebases[j]['lsfilename'],
+                      'path':filebases[j]['path'],
+                      'lastscan':filebases[j]['lastscan'],
+                      'total':filebases[j]['total'],
+                      'totalkb':filebases[j]['totalkb'],
+                      'totaldl':filebases[j]['totaldl'],
+                      'newfiles':filebases[j]['newfiles'],
+                      'id':filebases[j]['id'],
+                      'name':filebases[j]['name'],
+                      'type':'mbase',
+                      'acs':filebases[j]['listacs'],
+                      'dlacs':filebases[j]['dlacs'],
+                      'target':str(filebases[j]['id']),
+                      'desc':'',
+                      'groupid':filegroups[i]['id']})
         
         #found = True
   #if found == True:
@@ -1853,8 +1886,7 @@ def treelist(items,grouponly=False):
     #[opi] set selbar to current area 
     i = 0    
     fbase = getfbaseid(user["fbase"])
-    
-    if fbase != 0:
+    if fbase != None and fbase > 0:
       while i<len(items):
         if items[i]['type'] != 'group':
           if int(items[i]["target"]) == int(fbase["id"]):
@@ -1894,6 +1926,9 @@ def treelist(items,grouponly=False):
 
     chars = ['-', '/', '\\', '|']
 
+    #TODO: FIND BUF WHICH CAUSES THIS!
+    if top < 0:
+      top = 0
     
     mouse = False
     while done == False and not shutdown():
@@ -1928,7 +1963,8 @@ def treelist(items,grouponly=False):
           while y-top<=config2.getint('bases','max_lines') - 1:
 
               #gotoxy(1,1)
-              #write(str(y-top))
+              #writeln(str(top)+" "+str(len(items)))
+              #write(str(items[y]))
               #time.sleep(0.1)
 
               pos = mci_adjust_y(config2.get('bases','startpos'),y-top)
@@ -2100,9 +2136,9 @@ def treelist(items,grouponly=False):
                   selbar = tmppos
 
               #adjust top
-              if selbar <= top and selbar != 0:
-                  top = selbar - 1
-                  selbar = top + 1
+              if selbar < top:
+                  top = selbar
+                  selbar = top
 
             elif key == KEY_RIGHT:
               #oldpost
@@ -2713,12 +2749,21 @@ def filelistmenu(fbase):
         if top > 0:
             i = 0
             while i < top:
+              """
               write('|[X'+str(mci_extract_x(config2.get('desc','descpos'))))
               write('|[Y'+str(mci_extract_y(config2.get('desc','descpos'))+i))
               write('|16')
-              write(config2.get('desc','dizclearstr'))
-
-              #writexy(mci_extract_x(config2.get('desc','descpos')),mci_extract_y(config2.get('desc','descpos'))+i,8,'|16'+config2.get('desc','dizclearstr'))
+              flush()
+              clearx = wherex()
+              for i in range(clearx,130):
+                write(' ')
+              """
+              #write(config2.get('desc','dizclearstr'))
+              #gotoxy(mci_extract_x(config2.get('desc','descpos')),mci_extract_y(config2.get('desc','descpos'))+j+top)
+              #clearx = wherex()
+              #for i in range(clearx,130):
+              #  write(' ')
+              writexy(mci_extract_x(config2.get('desc','descpos')),mci_extract_y(config2.get('desc','descpos'))+i,8,'|16'+config2.get('desc','dizclearstr'))
               i+=1
                       
         while j < config2.getint('desc','max_lines') and j<len(items[selbar]['desc']):
@@ -2734,12 +2779,19 @@ def filelistmenu(fbase):
               write(fix_pwrite_bug(utf_to_ascii(items[selbar]['desc'][dizi+j])))
             write('|16')
 
-            write(config2.get('desc','dizclearstr'))
+            #write(config2.get('desc','dizclearstr'))
+            clearx = wherex()
+            for i in range(clearx,config2.getint('desc','clearend')):
+              write(' ')
             j+=1
 
         #[opi]continue redraw if fileid is finished to clear background
         while j < config2.getint('desc','max_lines')-top:
-            writexy(mci_extract_x(config2.get('desc','descpos')),mci_extract_y(config2.get('desc','descpos'))+j+top,8,config2.get('desc','dizclearstr'))
+            #writexy(mci_extract_x(config2.get('desc','descpos')),mci_extract_y(config2.get('desc','descpos'))+j+top,8,config2.get('desc','dizclearstr'))
+            gotoxy(mci_extract_x(config2.get('desc','descpos')),mci_extract_y(config2.get('desc','descpos'))+j+top)
+            clearx = wherex()
+            for i in range(clearx,config2.getint('desc','clearend')):
+              write(' ')
             j+=1
 
         ##if 'ansi' in items[selbar] and items[selbar]['ansi'] == False:
