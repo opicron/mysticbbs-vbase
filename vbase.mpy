@@ -135,9 +135,9 @@ max_base64_file_size  = 100000 #bytes
 max_view_file_size    = 100000000 #size in bytes
 
 max_file_size_str     = 'File size exceeds |&1.' #&1 is size formatted in KB/MB/GB etc
-queue_empty_str       = 'Queue is empty.'
-no_files_str          = 'No files found in filebase.'
-dialog_text_str       = '|15|23|&9|16' #|&9 is the displayed text
+queue_empty_str       = '|08[|15Queue Empty Error|08] |07Nothing to download!'
+no_files_str          = '|08[|15Base Empty Error|08] |15No files to show!'
+dialog_text_str       = '|07|16|&9|16' #|&9 is the displayed text
 
 clearscr              = '|16|07|CL'
 
@@ -605,7 +605,7 @@ def find_display_custom( filepath ):
       find_display('test')
     except AttributeError as e:
         
-        x, y = bbs.termsize();
+        x, y = termsize();
 
         base = filepath[:-4] 
 
@@ -820,17 +820,25 @@ def xwindow(title,typo,x1,y1,x2,y2):
 
 #------------------------------------------------------------------------------
 def msgdialog(title,text,p=True, typo=1):
-  s = dialog_text_str.replace('|&9',text)
-  a = len(stripmci(s))
-  if a<75:
-    #write(str(typo)+'__"')
-    xwindow(title,str(typo),40-(a // 2)-2,10,40+(a // 2)+2,14)
-    #writexy(40-(a // 2),12,dialog_text,text)
-    gotoxy(40-(a // 2),12)
-    write(s)
-    #write('|16')
 
-  if p: pause()  
+  s = dialog_text_str.replace('|&9',text)
+  #a = len(stripmci(s))
+
+  box_custom(s,title)
+
+  if (p):
+    box_getkey()
+
+  box_restore()
+
+  #if a<75:
+  #  #write(str(typo)+'__"')
+  #  xwindow(title,str(typo),40-(a // 2)-2,10,40+(a // 2)+2,14)
+  #  #writexy(40-(a // 2),12,dialog_text,text)
+  #  gotoxy(40-(a // 2),12)
+  #  write(s)
+  #  #write('|16')
+  #  if p: pause()  
 #------------------------------------------------------------------------------
 
 
@@ -3415,7 +3423,7 @@ def filelistmenu(fbase):
             elif key == KEY_ENTER or key == 'V':
               #logerror('--test')
               #logerror(str(fbase))
-              write('|SS')
+              
    
               #VIRTUAL BASE
               if fbase['tag'].find('!VB') > -1 or fbase['tag'].find('!VG') > -1:
@@ -3426,7 +3434,9 @@ def filelistmenu(fbase):
                     #showfile(file,0,True,True,False)
                     #menucmd('GV','ansiview.ini;ansiview_help.ans;0;'+file+'')
                     #write('|16')
+                    write('|SS')
                     menucmd('GV','ansiview;'+file)
+                    write('|RS')
                     redraw = True
                   else:
                     
@@ -3437,7 +3447,7 @@ def filelistmenu(fbase):
                     #menucmd('FV','archive_view;'+file)
                     s = 'Can not view non text file in virtual base (yet)'
                     msgdialog(' View ',s)
-                    redraw = True
+                    #redraw = True
 
               #REGULAR BASE      
               else: 
@@ -3454,7 +3464,9 @@ def filelistmenu(fbase):
                     #showfile(file,0,True,True,False)
                     #menucmd('GV','ansiview.ini;ansiview_help.ans;0;'+file+'')
                     #write('|16')
+                    write('|SS')
                     menucmd('GV','ansiview;'+file)
+                    write('|RS')
                     #redraw = True
                   else:
                     #terminal_restore()
@@ -3468,7 +3480,9 @@ def filelistmenu(fbase):
                     stuffkey(items[selbar]['name']+chr(13))
                     #key2 = getkey()
                     #write('|PA')
+                    write('|SS')
                     menucmd('FV',items[selbar]['name'])             
+                    write('|RS')
                   
                     
                     # - convert archive to zip
@@ -3486,14 +3500,17 @@ def filelistmenu(fbase):
                         #menucmd('GV','ansiviewtxt;ansiviewh;0;'+fbase['path']+items[selbar]['name'])
 
                     #terminal_set()
-              write('|RS')
 
             elif key == KEY_SPACE:
 
               if fbase['tag'].find('!VB') > -1 or fbase['tag'].find('!VG') > -1:
-                  s = 'Can not qeue files in virtual base, download directly instead'
-                  msgdialog(' View ',s)
-                  redraw = True
+
+                  s = '|08[|15Virtual Tag Error|08] |07Try Download instead!'
+                  msgdialog(' Tag ',s)
+                  redrawfnstr = True
+                  nextfile = True
+
+                  #redraw = True
                   #redrawfnstr = False
               else: 
 
@@ -3503,12 +3520,12 @@ def filelistmenu(fbase):
                   result = maybe_add_queue(selbar,top)
                   #redraw if error on queue
                   if result == False:
-                    s = '[Mystic Tag File Error] Download Queue and try Download instead!'
+                    s = '|08[|15Mystic Tag File Error|08] |07Download Queue First then Direct Download!'
                     if len(download_queue) == 0:
-                      s = '[Mystic Tag File Error] Try Download instead!'
+                      s = '|08[|15Mystic Tag File Error|08] |07Try Download instead!'
 
                     msgdialog(' Tag ',s)
-                    redraw = True
+                    #redraw = True
                                     
             elif key == 'Q':
                 #[opi] with new graphics we dont need to avoid this
@@ -3747,6 +3764,119 @@ def filelistmenu(fbase):
     #[opi] value is never being set? exit_keys are blank.
     return value
 #------------------------------------------------------------------------------
+
+
+def box_custom(content="", title="", **kwargs):
+    # Normalize content to list of strings
+    if isinstance(content, basestring):
+        content = [content]
+
+    # Include leading and trailing blank lines inside the box
+    content = [""] + content + [""]
+
+    # Determine required width from title
+    title_min_width = len(stripmci(title)) + 4
+
+    # Compute box width
+    content_width = max(len(stripmci(line)) for line in content)
+    box_width = max(content_width, title_min_width)
+
+    # Override minimal width if 'minwidth' is provided
+    if 'minwidth' in kwargs:
+      box_width = max(kwargs['minwidth'], box_width)
+
+    # Get terminal size and calculate default position
+    termx, termy = termsize()
+    startx = int((termx / 2) - (box_width / 2))
+    starty = int((termy / 2) - ((len(content) + 2) / 2))
+
+    # Apply startx/starty from kwargs if present
+    if 'startx' in kwargs:
+        startx = int(kwargs['startx'])
+    if 'starty' in kwargs:
+        starty = int(kwargs['starty'])
+
+    # Store state for restore
+    if not hasattr(box_custom, "startx"):
+        box_custom.startx = 0
+        box_custom.starty = 0
+        box_custom.width = 0
+        box_custom.height = 0
+
+    box_custom.startx = startx
+    box_custom.starty = starty
+    box_custom.width = box_width + 4
+    box_custom.height = len(content) + 2  # content + top + bottom
+
+    # Top border with title
+    dash_total = box_width
+    left_dashes = (dash_total - len(title)) // 2
+    right_dashes = dash_total - len(title) - left_dashes
+    title_colored = "|15{}|09".format(title)
+    top_with_title = ".{} {} {}.".format('-' * left_dashes, title_colored, '-' * right_dashes)
+
+    # Box lines
+    lines = []
+    lines.append("|09" + top_with_title)
+    for line in content:
+        padded = line + ' ' * (box_width - len(line))
+        lines.append("|09| " + padded + " |01|")
+    bottom = "|09`|01" + '-' * (box_width + 2) + "'"
+    lines.append(bottom)
+
+    # Capture background
+    background_buffer = []
+    for row in range(starty, starty + len(lines)):
+        line_chars = ""
+        for col in range(startx, startx + box_width + 4):
+            char_info = charxy(col, row)
+            fg = char_info[1] % 16
+            bg = (char_info[1] >> 4) & 0x0F
+            color = '|' + str(fg).zfill(2) + '|' + str(bg + 16).zfill(2)
+            line_chars += color + char_info[0]
+        background_buffer.append(line_chars)
+
+    box_custom.background_buffer = background_buffer
+
+    # Draw box
+    write('|08')
+    for i, l in enumerate(lines):
+        gotoxy(startx, starty + i)
+        writeln(l)
+
+
+
+def box_restore():
+    if not hasattr(box_custom, "background_buffer"):
+        return
+
+    for row_offset, row in enumerate(box_custom.background_buffer):
+        y = box_custom.starty + row_offset
+        gotoxy(box_custom.startx, y)
+        writeln(row + "|08")  # Reset color at end
+
+def box_getkey():
+    if not hasattr(box_custom, "background_buffer"):
+        return
+
+    #chars = ['-', '/', '|', '\\']
+    chars = ['.', 'o', 'O', 'o']
+    charindex = 0
+
+    gotoxy(box_custom.startx+box_custom.width-5, box_custom.starty+box_custom.height-1)
+    write('|09[|15'+chars[charindex]+'|09]|15')
+    flush()
+
+    while not keypressed_custom(0.3) and not shutdown():
+        gotoxy(box_custom.startx+box_custom.width-5+len(chars[charindex]), box_custom.starty+box_custom.height-1)
+
+        write(chars[charindex])
+        charindex += 1
+        if charindex > len(chars)-1:
+            charindex = 0
+
+    key = getkey_custom()
+    return key
 
 
 #------------------------------------------------------------------------------------------------------
