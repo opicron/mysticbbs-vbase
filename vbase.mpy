@@ -135,7 +135,7 @@ max_base64_file_size  = 100000 #bytes
 max_view_file_size    = 100000000 #size in bytes
 
 max_file_size_str     = 'File size exceeds |&1.' #&1 is size formatted in KB/MB/GB etc
-queue_empty_str       = '|08[|15Queue Empty Error|08] |07Nothing to download!'
+queue_empty_str       = '|08[|15Queue Empty Error|08] |07Nothing here!'
 no_files_str          = '|08[|15Base Empty Error|08] |15No files to show!'
 dialog_text_str       = '|07|16|&9|16' #|&9 is the displayed text
 
