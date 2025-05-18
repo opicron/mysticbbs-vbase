@@ -119,6 +119,8 @@ from operator import getitem
 #from operator import itemgetter
 
 
+items = None
+
 ##########################################################################################################################
 # Configuration data / prompts / strings
 ##########################################################################################################################
@@ -1019,7 +1021,7 @@ def editqueue():
         msgdialog(' Clear ',queue_empty_str)
 
       clear_download_queue()
-      if len(items)>0:
+      if items != None and len(items)>0:
         for i in range(len(items)):
           items[i]['queue'] = False
 
@@ -2454,6 +2456,7 @@ def treelist(items,grouponly=False):
                 elif ch == 'E': menucmd('F2','')
                 elif ch == 'F': menucmd('*F','')
                 elif ch == 'J': menucmd('*R','')              
+                    
             elif key == 'L':
               menucmd('FF','/allgroups')
               time.sleep(0.15)
@@ -2510,6 +2513,8 @@ def fix_pwrite_bug( s ):
 #------------------------------------------------------------------------------
 def updatebar(start_pos, index, total, height, vertical=True, redraw=False):
 
+    #gotoxy(1,1)
+    #write(str(redraw)+' '+str(index)+'  ')
     if not hasattr(updatebar, 'bar_oldpos_x'):
         updatebar.bar_oldpos_x = -1  # initialize once
 
@@ -2561,7 +2566,7 @@ def updatebar(start_pos, index, total, height, vertical=True, redraw=False):
         #x = (float(index) / float(total) ) * barlen
         x = index * barlen // total
 
-      if updatebar.bar_oldpos_x <> x:
+      if updatebar.bar_oldpos_x <> x or redraw:
 
         i = 0
         while i < barlen:
@@ -3741,6 +3746,13 @@ def filelistmenu(fbase):
                     s=str(items[selbar]['name'])
                     stuffkey(s+chr(13))
                     menucmd('F2','')
+                  if ch == '!': 
+                    for i in range(len(items)):
+                      if items[i]['newfile'] == True:
+                        s=str(items[i]['name'])
+                        stuffkey(s+chr(13)+'i'+'q')
+                        menucmd('F2','')
+                        time.sleep(0.2)
                     #if ch == 'F': menucmd('*F','')
                     #if ch == 'J': menucmd('*R','')
                 
