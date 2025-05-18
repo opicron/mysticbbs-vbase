@@ -2949,7 +2949,11 @@ def filelistmenu(fbase):
                 file = fbase['path']+items[selbar]['name']
               
                 redraw = True
-                if os.path.getsize(file) > max_view_file_size:
+                if not os.path.exists(file):
+                  s = '|08[|15File Not Found|08]|07 Cannot view file!'
+                  msgdialog(' View ',s)
+
+                elif os.path.getsize(file) > max_view_file_size:
                   s = max_file_size_str.replace('|&1',formatsize(max_view_file_size))
                   msgdialog(' View ',s)
                   
