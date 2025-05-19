@@ -99,6 +99,7 @@
 
 import os, sys, datetime, time, struct, json, re, ConfigParser, math, random
 import select, tty, termios
+import subprocess
 
 import traceback
 
@@ -737,15 +738,22 @@ def xwindow(title,typo,x1,y1,x2,y2):
 
 
 #------------------------------------------------------------------------------
-def msgdialog(title,text,p=True, typo=1):
+def msgdialog(title,content,p=True, typo=1):
 
-  s = dialog_text_str.replace('|&9',text)
+  s = content
+  key = None
+
+  if isinstance(content, basestring):
+    s = [dialog_text_str.replace('|&9',content)]
+
   box_custom(s,title)
 
   if (p):
-    box_getkey()
+    key = box_getkey()
 
   box_restore()
+
+  return key
 #------------------------------------------------------------------------------
 
 
@@ -2273,6 +2281,31 @@ def maybe_add_queue(selbar,top):
     
     return False
 
+
+
+def write_files_bbs(output_path, filename, description_lines):
+    """
+    Writes a FILES.BBS entry with filename and multiline description.
+
+    :param output_path: Path to FILES.BBS to write
+    :param filename: Name of the file (e.g., BSA-PCB1.ZIP)
+    :param description_lines: List of strings, first line goes next to filename
+    """
+    try:
+        with open(output_path+'FILES.BBS', 'w') as f:
+            # First line: filename and first description line
+            first_line = filename.ljust(20) + description_lines[0].rstrip()
+            f.write(first_line + "\n")
+
+            # Remaining lines: each prefixed with " + "
+            for line in description_lines[1:]:
+                f.write(" +" + line.rstrip() + "\r\n")
+
+    except IOError as e:
+        print("Error writing FILES.BBS: {}".format(e))
+
+
+
 #------------------------------------------------------------------------------
 #def filelistmenu(name,bid,items,x1,y1,x2,y2,hc=15,nc=7,sb=scrollbar):
 def filelistmenu(fbase):
@@ -2382,7 +2415,8 @@ def filelistmenu(fbase):
             #gotoxy(mci_extract_x(config2.get('desc','descpos')),mci_extract_y(config2.get('desc','descpos'))+j+top)
             write('|[X'+str(mci_extract_x(config2.get('desc','descpos'))))
             write('|[Y'+str(mci_extract_y(config2.get('desc','descpos'))+j+top))
-            write('|09'+s)
+
+            write(config2.get('desc','color')+s)
             if items[selbar]['desc'][dizi+j].find(chr(26)) < 0: #bugfix avoid error when sauce EOF data is present
               #write(items[selbar]['desc'][dizi+j])
               write(fix_pwrite_bug(utf_to_ascii(items[selbar]['desc'][dizi+j])))
@@ -2724,7 +2758,37 @@ def filelistmenu(fbase):
                   for item in items[selbar]['desc']:
                     if len(item) > items[selbar]['desclen']:
                       items[selbar]['desclen'] = len(item)
-        
+
+                  write_files_bbs(fbase['path'],items[selbar]['name'],lines)
+
+
+                  key = msgdialog('Update Description|07?',['        |15Y |08- |07Yes','        |15N |08- |07No','        |15Q |08- |07Quit','      |15ESC |08- |07Escape'])
+                  gotoxy(1,1)
+                  write(str(key))
+
+                  #write('|#X#2##09#12#69#16#|[Y12')
+                  #write('|[X02|[Y10[D] Date DESC - [N] Name ASC')
+                  if key != None and key[0].upper() == 'Y':
+
+                    #delete file from base
+                    s=str(items[selbar]['name'])
+                    stuffkey(s+chr(13)+'dynq')
+                    menucmd('F2','')
+
+                    #pack filebase
+                    subprocess.call(["/mystic/mutil", "-NOSCREEN", "mutil-packfilebase"])
+                    #import filesbbs
+                    subprocess.call(["/mystic/mutil", "-NOSCREEN", "mutil-filesbbs"])
+
+                    #edit file set date to original date
+                    s=str(items[selbar]['name'])
+                    date = datestr(items[selbar]["date"], "DDMMYY")
+                    stuffkey(s+chr(13)+'4'+date+chr(13)+'q')
+                    menucmd('F2','')
+
+                    redraw = True
+
+
             #elif items[selbar]['desc'][0] == prompt_208 and items[selbar]['name'][-4:] == '.flf':
             #  if exists(tmpbase['path']+items[selbar]["name"]):
             #    try: 
@@ -3229,6 +3293,7 @@ def filelistmenu(fbase):
                   ch = ch.upper()
                   if ch == 'U': menucmd('F1','')
                   if ch == 'E': 
+
                     s=str(items[selbar]['name'])
                     stuffkey(s+chr(13))
                     menucmd('F2','')
@@ -3308,8 +3373,8 @@ def box_custom(content="", title="", **kwargs):
 
     # Top border with title
     dash_total = box_width
-    left_dashes = (dash_total - len(title)) // 2
-    right_dashes = dash_total - len(title) - left_dashes
+    left_dashes = (dash_total - len(stripmci(title))) // 2
+    right_dashes = dash_total - len(stripmci(title)) - left_dashes
     title_colored = "|15{}|09".format(title)
     top_with_title = ".{} {} {}.".format('-' * left_dashes, title_colored, '-' * right_dashes)
 
@@ -3317,7 +3382,7 @@ def box_custom(content="", title="", **kwargs):
     lines = []
     lines.append("|09" + top_with_title)
     for line in content:
-        padded = line + ' ' * (box_width - len(line))
+        padded = line + ' ' * (box_width - len(stripmci(line)))
         lines.append("|09| " + padded + " |01|")
     bottom = "|09`|01" + '-' * (box_width + 2) + "'"
     lines.append(bottom)
