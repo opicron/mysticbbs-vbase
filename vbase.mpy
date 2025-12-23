@@ -750,8 +750,7 @@ def msgdialog(title,content,p=True, typo=1):
 
   if (p):
     key = box_getkey()
-
-  box_restore()
+    box_restore()
 
   return key
 #------------------------------------------------------------------------------
@@ -2294,17 +2293,129 @@ def write_files_bbs(output_path, filename, description_lines):
     try:
         with open(output_path+'FILES.BBS', 'w') as f:
             # First line: filename and first description line
-            first_line = filename.ljust(20) + description_lines[0].rstrip()
+            first_line = filename #.ljust(20) + description_lines[0].rstrip()
             f.write(first_line + "\n")
 
             # Remaining lines: each prefixed with " + "
-            for line in description_lines[1:]:
+            for line in description_lines:
                 f.write(" +" + line.rstrip() + "\r\n")
 
     except IOError as e:
         print("Error writing FILES.BBS: {}".format(e))
 
 
+def get_mod_result(item, path, autoload=False):
+
+    loaded = False
+    try:
+      file_mod_name = 'filemod_' + item['name'][-3:]
+      file_mod = __import__( file_mod_name.lower() )
+    except ImportError as e:
+      pass
+    except Exception as e:
+      #logging.error(traceback.format_exc())
+      #msgdialog('test',str(traceback.format_exc()))
+      error_message = str(e)
+      msgdialog('FileMod Error',error_message)
+      #print("An error occurred:", error_message)
+      #tb = traceback.format_exc()
+      #print(tb)
+      #write('|PN')
+    else:
+      loaded = True
+
+    if loaded:
+      error_message = None
+      try:
+        #if autoload, or not set
+        if autoload or not hasattr(file_mod, 'autoload') or file_mod.autoload:
+          #if showmsg and set
+          if hasattr(file_mod, 'showload') and file_mod.showload:
+            msgdialog('FileMod',['Getting FileMod Description'], False)
+            flush()
+          lines = file_mod.load_desc(item['name'], path)
+          if hasattr(file_mod, 'showload') and file_mod.showload:
+            box_restore()
+
+          if 'none' in lines[0].lower() or 'error' in lines[0].lower():
+            msgdialog('Description',lines)
+            return False
+            
+          #when forced with /F do not replace text
+          if not autoload:
+            item['desc'] = lines
+            for line in item['desc']:
+              if len(line) > item['desclen']:
+                item['desclen'] = len(line)
+
+          #allow sysop to force update description
+          if hasattr(file_mod, 'savedesc') and file_mod.savedesc:
+            if issysop():
+              write_files_bbs(path,item['name'],lines)
+
+              purgeinput()
+              key = msgdialog('Update Description|07?',lines[:7]+['','|08[|15y|08] |07yes |08[|15n|08] |07no |08[|15q|08] |07quit |08[|15esc|08] |07escape'])
+              #gotoxy(1,1)
+              #write(str(key))
+
+              #write('|#X#2##09#12#69#16#|[Y12')
+              #write('|[X02|[Y10[D] Date DESC - [N] Name ASC')
+              if key != None and key[0].upper() == 'Y':
+
+                item['desc'] = lines
+                for line in item['desc']:
+                  if len(line) > item['desclen']:
+                    item['desclen'] = len(line)
+
+                #delete file from base
+                s=str(item['name'])
+                stuffkey(s+chr(13)+'dynq')
+                menucmd('F2','')
+
+                #pack filebase
+                subprocess.call(["/mystic/mutil", "-NOSCREEN", "mutil-packfilebase.ini"], cwd="/mystic")
+                #import filesbbs
+                subprocess.call(["/mystic/mutil", "-NOSCREEN", "mutil-filesbbs-vbase.ini"], cwd="/mystic")
+                
+                #edit file set date to original date
+                s=str(item['name'])
+                date = datestr(item["date"], "DDMMYY")
+                stuffkey(s+chr(13)+'4'+date+chr(13)+'q')
+                menucmd('F2','')
+
+                return True
+
+          #when forced autoload      
+          if autoload:
+            return True
+
+          return False
+          #time.sleep(0.1)
+        #else:
+
+          #if issysop():
+          #  error_message = 'Autoload not active'
+          #  raise Exception("Autoload not active")
+          ##skip logic 
+          ##lines = False
+
+      except AttributeError: 
+        error_message = 'Could not find function load_desc()'
+        pass
+      except TypeError:
+        error_message = 'Function load_desc() takes two parameters'                  
+        pass
+      except Exception as e:
+        error_message = str(e)
+      finally:
+        if error_message != None:
+          #if showmsg and set
+          if hasattr(file_mod, 'showload') and file_mod.showload:
+            box_restore()
+          msgdialog('FileMod Error',error_message)
+          logerror('vBase FileMod - '+error_message)
+      
+    return False
 
 #------------------------------------------------------------------------------
 #def filelistmenu(name,bid,items,x1,y1,x2,y2,hc=15,nc=7,sb=scrollbar):
@@ -2719,102 +2830,8 @@ def filelistmenu(fbase):
 
             # if no desc try load module
             if items[selbar]['desc'][0] == prompt_208:
-              loaded = False
-              try:
-                file_mod_name = 'filemod_' + items[selbar]['name'][-3:]
-                file_mod = __import__( file_mod_name.lower() )
-              except ImportError as e:
-                pass
-              except Exception as e:
-                #logging.error(traceback.format_exc())
-                #msgdialog('test',str(traceback.format_exc()))
-                error_message = str(e)
-                print("An error occurred:", error_message)
-                tb = traceback.format_exc()
-                print(tb)
-                write('|PN')
-              else:
-                loaded = True
 
-              if loaded:
-                try:
-                  lines = file_mod.load_desc(items[selbar]['name'], fbase['path'])
-                except NameError:        
-                  logerror('vBase FileMod - could not find function load_desc() in python module')
-                  pass
-                except TypeError:
-                  logerror('vBase FileMod - function load_desc() takes two parameters')
-                  pass
-                except Exception as e:
-                  #logging.error(traceback.format_exc())
-                  error_message = str(e)
-                  print("An error occurred:", error_message)
-                  tb = traceback.format_exc()
-                  print(tb)
-                  write('|PN')
-                else: 
-
-                  items[selbar]['desc'] = lines
-                  for item in items[selbar]['desc']:
-                    if len(item) > items[selbar]['desclen']:
-                      items[selbar]['desclen'] = len(item)
-
-                  write_files_bbs(fbase['path'],items[selbar]['name'],lines)
-
-
-                  key = msgdialog('Update Description|07?',['        |15Y |08- |07Yes','        |15N |08- |07No','        |15Q |08- |07Quit','      |15ESC |08- |07Escape'])
-                  gotoxy(1,1)
-                  write(str(key))
-
-                  #write('|#X#2##09#12#69#16#|[Y12')
-                  #write('|[X02|[Y10[D] Date DESC - [N] Name ASC')
-                  if key != None and key[0].upper() == 'Y':
-
-                    #delete file from base
-                    s=str(items[selbar]['name'])
-                    stuffkey(s+chr(13)+'dynq')
-                    menucmd('F2','')
-
-                    #pack filebase
-                    subprocess.call(["/mystic/mutil", "-NOSCREEN", "mutil-packfilebase"])
-                    #import filesbbs
-                    subprocess.call(["/mystic/mutil", "-NOSCREEN", "mutil-filesbbs"])
-
-                    #edit file set date to original date
-                    s=str(items[selbar]['name'])
-                    date = datestr(items[selbar]["date"], "DDMMYY")
-                    stuffkey(s+chr(13)+'4'+date+chr(13)+'q')
-                    menucmd('F2','')
-
-                    redraw = True
-
-
-            #elif items[selbar]['desc'][0] == prompt_208 and items[selbar]['name'][-4:] == '.flf':
-            #  if exists(tmpbase['path']+items[selbar]["name"]):
-            #    try: 
-            #      #get width of character
-            #      #str(figlet_format('test', font=txt)) 
-            #      #f = Figlet(font=fbase['path']+items[selbar]['name'][0:-4],width=dizmaxwidth-10,justify="center") 
-            #      f = Figlet(font=tmpbase['path']+items[selbar]['name'][0:-4],width=dizmaxwidth,justify="left") 
-            #      #text = f.renderText(items[selbar]['name'][0:-4]).encode('ascii') #must encode to ascii to avoid unicode errors
-            #      if items[selbar]["name"] == "tmplr":
-            #        text = f.renderText('0123456789') #must encode to ascii to avoid unicode errors
-            #      else:
-            #        text = f.renderText(items[selbar]['name'][0:-4]) #must encode to ascii to avoid unicode errors
-            #
-            #      items[selbar]['desc'] = text.splitlines()
-            #      for item in items[selbar]['desc']:
-            #        if len(item) > items[selbar]['desclen']:
-            #          items[selbar]['desclen'] = len(item)
-            #
-            #    except Exception:
-            #      items[selbar]['desc'][0] = 'Could not load font'
-            #      items[selbar]['desclen'] = len(items[selbar]['desc'][0])
-            #    
-            #    if len(items[selbar]['desc']) == 0:
-            #      items[selbar]['desc'] = []
-            #      items[selbar]['desc'].append('Could not load font')
-            #      items[selbar]['desclen'] = len(items[selbar]['desc'][0])
+              redraw = get_mod_result(items[selbar], fbase['path'])
 
             
             #if description is filename
@@ -3292,6 +3309,11 @@ def filelistmenu(fbase):
                 if extended == False:
                   ch = ch.upper()
                   if ch == 'U': menucmd('F1','')
+                  if ch == 'F': 
+
+                    #get description
+                    get_mod_result(items[selbar], fbase['path'], True)
+
                   if ch == 'E': 
 
                     s=str(items[selbar]['name'])
